@@ -40,12 +40,20 @@ import java.text.SimpleDateFormat;
  */
 public class MainActivity extends AppCompatActivity {
 
-    /** Tag for the log messages */
+    /**
+     * Tag for the log messages
+     */
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    /** URL to query the USGS dataset for earthquake information */
+    /**
+     * URL to query the USGS dataset for earthquake information
+     */
     private static final String USGS_REQUEST_URL =
-            "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2012-01-01&endtime=2012-12-01&minmagnitude=6";
+            "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-12-01&minmagnitude=7";
+    private static final String USGS_REQUEST_URL_VALID =
+            "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-01-02";
+    private static final String USGS_REQUEST_URL_INVALID =
+            "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-01-02asdfasdf";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Event doInBackground(URL... urls) {
             // Create URL object
-            URL url = createUrl(USGS_REQUEST_URL);
+            URL url = createUrl(USGS_REQUEST_URL_VALID);
 
             // Perform HTTP request to the URL and receive a JSON response back
             String jsonResponse = "";
@@ -162,10 +170,16 @@ public class MainActivity extends AppCompatActivity {
                 urlConnection.setReadTimeout(10000 /* milliseconds */);
                 urlConnection.setConnectTimeout(15000 /* milliseconds */);
                 urlConnection.connect();
-                inputStream = urlConnection.getInputStream();
-                jsonResponse = readFromStream(inputStream);
+                if (urlConnection.getResponseCode() == 200) {
+                    inputStream = urlConnection.getInputStream();
+                    jsonResponse = readFromStream(inputStream);
+                } else
+                    Log.v("Http response code", "" + urlConnection.getResponseCode());
+
             } catch (IOException e) {
                 // TODO: Handle the exception
+                Log.v("Problem with IO", "true");
+
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
@@ -175,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
                     inputStream.close();
                 }
             }
+
             return jsonResponse;
         }
 
